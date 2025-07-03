@@ -1,0 +1,46 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: Module",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "main",
+        },
+        {
+            "name": "FastAPI: Uvicorn",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "main:app",          // replace `main` with your FastAPI filename (without .py)
+                "--reload"
+            ],
+            "jinja": true,
+            "cwd": "${workspaceFolder}"
+          },
+          {
+            "name": "Run Gradio App",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/chatbot_ui.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
+          },
+          {
+            "name": "Run Streamlit App",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/.venv/bin/streamlit",  // or "streamlit" if globally installed
+            "args": ["run", "chatbot_ui.py", "--server.runOnSave=true"],
+            "env": {
+              "STREAMLIT_SERVER_HEADLESS": "true"
+            },
+            "console": "integratedTerminal"
+          }          
+          
+    ]
+}
