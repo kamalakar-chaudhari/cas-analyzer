@@ -5,21 +5,20 @@ from openai import OpenAI
 
 
 class OpenAIService:
-    def __init__(self):
+    def __init__(self, tools=None):
+        self.tools = tools
         api_key = os.getenv("OPENAI_API_KEY")
         self.llm_client = OpenAI(api_key=api_key)
-
-    def set_tool_schemas(self, tool_schemas):
-        self.tool_schemas = tool_schemas
 
     def ask(self, messages: List):
         response = self.llm_client.chat.completions.create(
             model="gpt-4o",
             messages=messages,
-            # tools=self.tool_schemas,
+            # tools=self.tools,
             # tool_choice="auto",
         )
-        return response
+        llm_reply, tool_call = self.parse_response(response)
+        return llm_reply, tool_call
 
     def parse_tool_call(self, tool_call):
         func_name = tool_call.function.name

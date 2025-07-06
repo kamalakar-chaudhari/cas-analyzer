@@ -14,8 +14,12 @@ PRD:
     + sorted list of funds as per their performance xirr and absolute
     + 
     + show cap composition
+    + returns per cap
+    + funds in a given cap with their returns
     + ideal cap composition as per user's age
     + what is my xirr in large-cap funds?
+    +
+    + multi lingual support
 
 
 TDD:
