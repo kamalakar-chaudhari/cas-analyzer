@@ -2,5 +2,5 @@ from services.openai_service import OpenAIService
 from services.session_service import SessionService
 
 
-llm_service = OpenAIService()
+llm = OpenAIService()
 session_service = SessionService()

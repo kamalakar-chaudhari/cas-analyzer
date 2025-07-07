@@ -1,12 +1,12 @@
 # api/chat.py
 from io import BytesIO
-import json
 from fastapi import APIRouter, File, Form, Request, UploadFile
 from pydantic import BaseModel
 
 from agents.pf_analyzer_agent import PFAnalyzerAgent
-from app_context import session_service, llm_service
+from app_context import session_service, llm
 from domain.cas_parser import CasParser
+from tools.schema import tools
 
 router = APIRouter(prefix="/api", tags=["Chat"])
 
@@ -22,9 +22,9 @@ async def chat_endpoint(request: Request):
     user_query = body.get("message")
 
     session_id = request.headers.get("session_id")
-    session_data = session_service.get_session_data(session_id)
+    pf_agent = PFAnalyzerAgent(session_id, llm, tools)
 
-    reply = await pf_analyzer_agent.answer_pf_query(user_query, session_data)
+    reply = await pf_agent.answer_pf_query(user_query)
     return {"reply": reply}
 
 
@@ -46,7 +46,7 @@ async def upload_file(
     }
     session_service.set_session_data(session_id, session_data)
 
-    pf_agent = PFAnalyzerAgent(llm_service, session_id)
+    pf_agent = PFAnalyzerAgent(session_id, llm)
     summary = pf_agent.get_portfolio_summary()
     print(summary)
     return {"reply": summary}
