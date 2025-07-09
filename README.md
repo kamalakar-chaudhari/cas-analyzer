@@ -18,6 +18,7 @@ PRD:
     + funds in a given cap with their returns
     + ideal cap composition as per user's age
     + what is my xirr in large-cap funds?
+    + realised gains and unrealised gains
     +
     + multi lingual support
 

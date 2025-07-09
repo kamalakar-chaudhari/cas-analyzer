@@ -2,6 +2,7 @@ import json
 import os
 from typing import Dict, List, Optional
 from openai import OpenAI
+from openai.types.chat import ChatCompletionMessageParam
 
 
 class OpenAIService:
@@ -9,12 +10,13 @@ class OpenAIService:
         api_key = os.getenv("OPENAI_API_KEY")
         self.llm_client = OpenAI(api_key=api_key)
 
-    def ask(self, messages: List[Dict], tools: Optional[List] = None):
+    def invoke(self, messages, tools=None):
         response = self.llm_client.chat.completions.create(
             model="gpt-4o",
             messages=messages,
             tools=tools or [],
             tool_choice="auto",
+            temperature=0.0,
         )
         llm_reply, tool_calls = self.parse_response(response)
         return llm_reply, tool_calls

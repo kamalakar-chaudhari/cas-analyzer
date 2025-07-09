@@ -24,7 +24,7 @@ async def chat_endpoint(request: Request):
     session_id = request.headers.get("session_id")
     pf_agent = PFAnalyzerAgent(session_id, llm, tools)
 
-    reply = await pf_agent.answer_pf_query(user_query)
+    reply = await pf_agent.ask(user_query)
     return {"reply": reply}
 
 
@@ -36,13 +36,14 @@ async def upload_file(
     file_stream = BytesIO(file_bytes)
 
     cas_parser = CasParser(file_stream, password)
-    curr_holdings, past_holdings, txns = cas_parser.parse()
+    txns, curr_holdings, past_holdings, cashflows = cas_parser.parse()
 
     session_id = request.headers.get("session_id")
     session_data = {
+        "txns": txns,
         "curr_holdings": curr_holdings,
         "past_holdings": past_holdings,
-        "txns": txns,
+        "cashflows": cashflows,
     }
     session_service.set_session_data(session_id, session_data)
 

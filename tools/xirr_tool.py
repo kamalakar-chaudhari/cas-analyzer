@@ -4,33 +4,33 @@ import numpy as np
 from scipy.optimize import newton
 
 
-def get_xirr(transactions: List[Dict]) -> float:
+def get_xirr(cashflows: List[Dict]) -> float:
     """
-    Calculate the XIRR for a list of mutual fund transactions.
+    Calculate the XIRR for a list of mutual fund cashflows.
 
-    Each transaction must have:
+    Each cashflow must have:
     - "amount": float (positive for inflows/redemptions, negative for investments)
     - "date": str in "YYYY-MM-DD" format
 
     Args:
-        transactions (List[Dict]): List of dicts with "amount" and "date" keys
+        cashflows (List[Dict]): List of dicts with "amount" and "date" keys
 
     Returns:
         float: XIRR as a decimal (e.g., 0.124 means 12.4%)
     """
 
-    if not transactions or len(transactions) < 2:
-        raise ValueError("At least two transactions are required to compute XIRR.")
+    if not cashflows or len(cashflows) < 2:
+        raise ValueError("At least two cashflows are required to compute XIRR.")
 
     # Convert to amounts and datetime objects
     cash_flows = []
     dates = []
-    for tx in transactions:
+    for tx in cashflows:
         cash_flows.append(float(tx["amount"]))
         dates.append(datetime.strptime(tx["date"], "%Y-%m-%d"))
 
     # Use the earliest date as base
-    start_date = dates[0]
+    start_date = min(dates)
 
     # XIRR objective function
     def xnpv(rate: float):
@@ -45,4 +45,4 @@ def get_xirr(transactions: List[Dict]) -> float:
     except RuntimeError:
         raise ValueError("XIRR calculation failed to converge.")
 
-    return result
+    return float(result * 100)
