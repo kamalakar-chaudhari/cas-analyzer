@@ -5,30 +5,16 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: Module",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "main",
-        },
-        {
             "name": "FastAPI: Uvicorn",
             "type": "debugpy",
             "request": "launch",
             "module": "uvicorn",
             "args": [
-                "main:app",          // replace `main` with your FastAPI filename (without .py)
+                "main:app",
                 "--reload"
             ],
             "jinja": true,
             "cwd": "${workspaceFolder}"
-          },
-          {
-            "name": "Run Gradio App",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/chatbot_ui.py",
-            "console": "integratedTerminal",
-            "justMyCode": true
           },
           {
             "name": "Run Streamlit App",

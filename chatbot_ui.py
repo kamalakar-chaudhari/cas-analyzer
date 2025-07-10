@@ -3,6 +3,8 @@ from uuid import uuid4
 import streamlit as st
 import requests
 
+import plotly.express as px
+
 
 # --- AgentService: Handles backend API calls ---
 class AgentClient:
@@ -42,6 +44,8 @@ class ChatBot:
             st.session_state.chat_history = []
         if "file_uploaded" not in st.session_state:
             st.session_state.file_uploaded = False
+        if "pending_message" not in st.session_state:
+            st.session_state.pending_message = None
 
     def handle_upload(self):
         # with st.container():
@@ -79,12 +83,20 @@ class ChatBot:
         #     st.info("Please upload and decrypt a file before starting the chat.")
         #     return  # ⛔ Prevent chat input from showing
 
+        # Handle pending message from previous interaction
+        if st.session_state.pending_message:
+            reply = self.agent.send_message(st.session_state.pending_message)
+            st.session_state.chat_history.append(("assistant", reply))
+            st.session_state.pending_message = None
+
         user_input = st.chat_input("Ask something...")
 
         if user_input:
+            # Add user message immediately to make it visible
             st.session_state.chat_history.append(("user", user_input))
-            reply = self.agent.send_message(user_input)
-            st.session_state.chat_history.append(("assistant", reply))
+            # Store the message to be processed in the next rerun
+            st.session_state.pending_message = user_input
+            st.rerun()
 
     def _handle_chat(self):
         # st.subheader("💬 Chat")
@@ -95,7 +107,39 @@ class ChatBot:
             reply = self.agent.send_message(user_input)
             st.session_state.chat_history.append(("assistant", reply))
 
+    graph_code = """
+import streamlit as st
+import plotly.express as px
+curr_holdings = [
+    {
+        "scheme": "Motilal Oswal Nifty 200 Momentum 30 Index Fund - Direct Growth",
+        "market_value": 83336.3989393,
+    },
+    {
+        "scheme": "Mirae Asset Aggressive Hybrid Fund - Direct Plan",
+        "market_value": 101436.827504,
+    },
+]
+
+# Extract scheme names and market values
+scheme_names = [holding["scheme"] for holding in curr_holdings]
+market_values = [holding["market_value"] for holding in curr_holdings]
+
+# Create a pie chart
+fig = px.pie(
+    values=market_values,
+    names=scheme_names,
+    title="Current Holdings Distribution",
+    hole=0.3,
+)
+
+# Display the pie chart
+st.plotly_chart(fig)
+"""
+
     def render_history(self):
+        with st.chat_message("assistant"):
+            exec(self.graph_code)
         for role, message in st.session_state.chat_history:
             with st.chat_message(role):
                 st.markdown(message)
