@@ -3,7 +3,9 @@ from typing import List, Optional
 
 
 from app_context import session_service
+from lib.utils import object_to_json_str
 from services.openai_service import OpenAIService
+from tools.filter_transactions_tool import filter_transactions_by_isin
 from tools.xirr_tool import get_xirr
 
 PORTFOLIO_SUMMARY_PROMPT = """
@@ -36,7 +38,7 @@ PORTFOLIO_QUERY_PROMPT = """
     You have access to a set of tools (functions). Use them when appropriate to obtain the information required to answer the user's query.
 
     Your job is to:
-    - Understand the user’s query
+    - Understand the user's query
     - Call the most appropriate function with the correct arguments
     - Wait for the result of that function call (you will receive it from the system)
     - Continue reasoning or call more functions if needed
@@ -45,7 +47,7 @@ PORTFOLIO_QUERY_PROMPT = """
     ---
 
     Available functions:
-    - get_xirr(cashflows: List[Dict]) — Calculate annualized return based on dated cashflows.
+    - get_xirr(transactions: List[Dict]) — Calculate annualized return based on dated transactions.
 
     ---
 
@@ -53,12 +55,11 @@ PORTFOLIO_QUERY_PROMPT = """
     - Use tool calls only when required — not every query needs a tool.
     - The system will handle calling the tool — just provide the function name and arguments.
     - Once you have all the information you need, respond to the user with a clear and final answer.
+    - If the result would benefit from visual representation (e.g., comparing performance across funds), return a code snippet that can be used in Streamlit to render the relevant graph using matplotlib or plotly.
     - Do not include any internal reasoning, thoughts, or tool call descriptions in your response.
 
     Only respond with a natural user-facing answer when you are done.
 """
-
-# TOOLS = {"get_xirr": xirr_tool}
 
 
 class PFAnalyzerAgent:
@@ -74,8 +75,7 @@ class PFAnalyzerAgent:
         session_data = session_service.get_session_data(self.session_id)
         self.curr_holdings = session_data["curr_holdings"]
         self.past_holdings = session_data["past_holdings"]
-        self.txns = session_data["txns"]
-        self.cashflows = session_data["cashflows"]
+        self.transactions = session_data["transactions"]
 
         holdings = {
             "curr_holdings": self.curr_holdings,
@@ -102,8 +102,7 @@ class PFAnalyzerAgent:
                 "role": "user",
                 "content": (
                     "I have initialized the following data variables for you:\n"
-                    "- `var_txns`: all my transactions\n"
-                    "- `var_cashflows`: signed cashflows for XIRR calculation\n"
+                    "- `var_transactions`: all my transactions\n"
                     "- `var_curr_holdings`: current holdings\n"
                     "- `var_past_holdings`: holdings sold in the past\n\n"
                     "You can refer to these variables in function calls — do not generate or assume any actual data.\n\n"
@@ -128,7 +127,7 @@ class PFAnalyzerAgent:
                     }
                 )
                 for tool_call in tool_calls:
-                    observation = str(self.process_tool_call(tool_call))
+                    observation = self.process_tool_call(tool_call)
                     messages.append(
                         {
                             "role": "tool",
@@ -140,12 +139,19 @@ class PFAnalyzerAgent:
                 break
         return final_answer
 
-    def process_tool_call(self, tool_call):
+    def process_tool_call(self, tool_call) -> str:
         tool_name, arguments = self.llm.parse_tool_call(tool_call)
 
         if tool_name == "get_xirr":
-            if arguments["cashflows"] == "var_cashflows":
-                return get_xirr(self.cashflows)
+            if (transactions := arguments["transactions"]) == "var_transactions":
+                transactions = self.transactions
+            return str(get_xirr(transactions))
+        elif tool_name == "filter_transactions_by_isin":
+            if (transactions := arguments["transactions"]) == "var_transactions":
+                transactions = self.transactions
+            return object_to_json_str(
+                filter_transactions_by_isin(transactions, arguments["isin"])
+            )
         # elif tool_name == "get_cap_composition":
         #     arguments["holdings"] = portfolio["holdings"]
 

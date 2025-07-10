@@ -36,14 +36,13 @@ async def upload_file(
     file_stream = BytesIO(file_bytes)
 
     cas_parser = CasParser(file_stream, password)
-    txns, curr_holdings, past_holdings, cashflows = cas_parser.parse()
+    transactions, curr_holdings, past_holdings = cas_parser.parse()
 
     session_id = request.headers.get("session_id")
     session_data = {
-        "txns": txns,
+        "transactions": transactions,
         "curr_holdings": curr_holdings,
         "past_holdings": past_holdings,
-        "cashflows": cashflows,
     }
     session_service.set_session_data(session_id, session_data)
 

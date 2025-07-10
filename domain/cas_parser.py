@@ -62,35 +62,44 @@ class CasParser:
 
         return curr_holdings, past_holdings
 
-    def _get_cashflows(self, txns_df, curr_holdings):
-        cashflows = txns_df[["date", "amount", "isin", "scheme", "type"]].to_dict(
-            orient="records"
+    def _merge_curr_holdings_to_txns(self, txns_df, curr_holdings):
+        curr_holdings_df = pd.DataFrame(
+            {
+                "date": datetime.now().strftime("%Y-%m-%d"),
+                "amount": curr_holdings["market_value"],
+                "isin": curr_holdings["isin"],
+                "scheme": curr_holdings["scheme"],
+                "type": "HOLDINGS",
+                "description": "Current holdings",
+            }
         )
-        for _, row in curr_holdings.iterrows():
-            cashflows.append(
-                {
-                    "date": datetime.now().strftime("%Y-%m-%d"),
-                    "amount": row["market_value"],
-                    "isin": row["isin"],
-                    "scheme": row["scheme"],
-                    "type": "HOLDINGS",
-                }
-            )
-        return cashflows
+        return pd.concat([txns_df, curr_holdings_df], ignore_index=True)
 
     def parse(self):
         txns = casparser.read_cas_pdf(self.file_stream, self.password, output="csv")
-        txns_df = pd.read_csv(StringIO(txns))
+        txns_df = pd.read_csv(StringIO(str(txns)))
         txns_df["amount"] = txns_df.apply(self._get_cashflow_sign, axis=1)
 
+        # Keep only the specified fields
+        required_columns = [
+            "amount",
+            "date",
+            "units",
+            "isin",
+            "scheme",
+            "type",
+            "description",
+        ]
+        available_columns = [col for col in required_columns if col in txns_df.columns]
+        txns_df = txns_df[available_columns]
+
         curr_holdings, past_holdings = self._get_current_and_past_holdings(txns_df)
-        cashflows = self._get_cashflows(txns_df, curr_holdings)
+        txns_df = self._merge_curr_holdings_to_txns(txns_df, curr_holdings)
 
         return (
             txns_df.to_dict(orient="records"),
             curr_holdings.to_dict(orient="records"),
             past_holdings.to_dict(orient="records"),
-            cashflows,
         )
 
     def get_latest_nav(self, isin):
