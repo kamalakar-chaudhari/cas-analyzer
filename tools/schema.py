@@ -70,4 +70,35 @@ tools = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_asset_class_summary",
+            "description": "Summarizes current holdings by asset class, returning market value and percentage share for each asset class.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "curr_holdings": {
+                        "type": "array",
+                        "description": "List of current holding records, each containing at least 'isin' and 'market_value'.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "isin": {
+                                    "type": "string",
+                                    "description": "ISIN code of the security",
+                                },
+                                "market_value": {
+                                    "type": "number",
+                                    "description": "Market value of the holding",
+                                },
+                            },
+                            "required": ["isin", "market_value"],
+                        },
+                    }
+                },
+                "required": ["curr_holdings"],
+            },
+        },
+    },
 ]
