@@ -1,0 +1,52 @@
+scheme_cat,asset_class
+Equity Scheme - Large Cap Fund,Equity
+Equity Scheme - Mid Cap Fund,Equity
+Equity Scheme - Small Cap Fund,Equity
+Equity Scheme - Multi Cap Fund,Equity
+Equity Scheme - Flexi Cap Fund,Equity
+Equity Scheme - Large & Mid Cap Fund,Equity
+Equity Scheme - Focused Fund,Equity
+Equity Scheme - Value Fund,Equity
+Equity Scheme - Contra Fund,Equity
+Equity Scheme - Dividend Yield Fund,Equity
+Equity Scheme - Sectoral/ Thematic,Equity
+Equity Scheme - ELSS,Equity
+ELSS,Equity
+Other Scheme - Index Funds,Equity
+Other Scheme - Other  ETFs,Equity
+Solution Oriented Scheme - Retirement Fund,Equity
+Solution Oriented Scheme - Children s Fund,Equity
+Hybrid Scheme - Aggressive Hybrid Fund,Hybrid
+Hybrid Scheme - Conservative Hybrid Fund,Hybrid
+Hybrid Scheme - Arbitrage Fund,Hybrid
+Hybrid Scheme - Balanced Hybrid Fund,Hybrid
+Hybrid Scheme - Dynamic Asset Allocation or Balanced Advantage,Hybrid
+Hybrid Scheme - Multi Asset Allocation,Hybrid
+Hybrid Scheme - Equity Savings,Hybrid
+Balanced,Hybrid
+Debt Scheme - Liquid Fund,Debt
+Debt Scheme - Ultra Short Duration Fund,Debt
+Debt Scheme - Low Duration Fund,Debt
+Debt Scheme - Short Duration Fund,Debt
+Debt Scheme - Medium Duration Fund,Debt
+Debt Scheme - Medium to Long Duration Fund,Debt
+Debt Scheme - Long Duration Fund,Debt
+Debt Scheme - Floater Fund,Debt
+Debt Scheme - Credit Risk Fund,Debt
+Debt Scheme - Corporate Bond Fund,Debt
+Debt Scheme - Banking and PSU Fund,Debt
+Debt Scheme - Money Market Fund,Debt
+Debt Scheme - Dynamic Bond,Debt
+Debt Scheme - Gilt Fund,Debt
+Debt Scheme - Gilt Fund with 10 year constant duration,Debt
+Debt Scheme - Overnight Fund,Debt
+Liquid,Debt
+Money Market,Debt
+Gilt,Debt
+Floating Rate,Debt
+Income,Debt
+Growth,Debt
+Assured Return,Debt
+Other Scheme - Gold ETF,Gold
+Other Scheme - FoF Domestic,Other
+Other Scheme - FoF Overseas,Other

@@ -5,6 +5,7 @@ from typing import List, Optional
 from app_context import session_service
 from lib.utils import object_to_json_str
 from services.openai_service import OpenAIService
+from tools.cap_composition_tool import get_asset_class_summary
 from tools.filter_transactions_tool import filter_transactions_by_isin
 from tools.xirr_tool import get_xirr
 
@@ -43,11 +44,6 @@ PORTFOLIO_QUERY_PROMPT = """
     - Wait for the result of that function call (you will receive it from the system)
     - Continue reasoning or call more functions if needed
     - Return a final answer to the user once sufficient information is available
-
-    ---
-
-    Available functions:
-    - get_xirr(transactions: List[Dict]) — Calculate annualized return based on dated transactions.
 
     ---
 
@@ -152,7 +148,7 @@ class PFAnalyzerAgent:
             return object_to_json_str(
                 filter_transactions_by_isin(transactions, arguments["isin"])
             )
-        # elif tool_name == "get_cap_composition":
-        #     arguments["holdings"] = portfolio["holdings"]
-
-        # result = TOOLS[tool_name](**arguments)
+        elif tool_name == "get_asset_class_summary":
+            if (curr_holdings := arguments["curr_holdings"]) == "var_curr_holdings":
+                curr_holdings = self.curr_holdings
+            return object_to_json_str(get_asset_class_summary(curr_holdings))
