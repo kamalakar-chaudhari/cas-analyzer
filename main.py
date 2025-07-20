@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from fastapi import FastAPI
-from api import router as chat_router
+from api.routes import router as chat_router
 
 app = FastAPI()
 

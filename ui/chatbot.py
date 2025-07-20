@@ -75,9 +75,9 @@ class ChatBot:
                     st.error("❌ File upload or decryption failed.")
 
     def handle_chat(self):
-        # if not st.session_state.file_uploaded:
-        #     st.info("Please upload and decrypt a file before starting the chat.")
-        #     return  # ⛔ Prevent chat input from showing
+        if not st.session_state.file_uploaded:
+            st.info("Please upload and decrypt a file before starting the chat.")
+            return  # ⛔ Prevent chat input from showing
 
         user_input = st.chat_input("Ask something...")
 

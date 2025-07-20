@@ -103,7 +103,7 @@ class CasParser:
         )
 
     def get_latest_nav(self, isin):
-        df = pd.read_csv("./data/navall.csv", delimiter=";", thousands=",")
+        df = pd.read_csv("./reference_data/navall.csv", delimiter=";", thousands=",")
         nav = df.loc[
             (df["ISIN Div Payout/ ISIN Growth"] == isin)
             | (df["ISIN Div Reinvestment"] == isin),

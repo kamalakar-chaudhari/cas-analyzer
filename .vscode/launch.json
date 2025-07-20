@@ -21,7 +21,7 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/.venv/bin/streamlit",  // or "streamlit" if globally installed
-            "args": ["run", "chatbot_ui.py", "--server.runOnSave=true"],
+            "args": ["run", "ui/chatbot.py", "--server.runOnSave=true"],
             "env": {
               "STREAMLIT_SERVER_HEADLESS": "true"
             },

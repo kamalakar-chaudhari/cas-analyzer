@@ -2,8 +2,8 @@ import json
 from typing import List, Optional
 
 
-from app_context import session_service
-from lib.utils import object_to_json_str
+# from config.app_context import session_service
+from utils.generic_utils import object_to_json_str
 from services.openai_service import OpenAIService
 from tools.cap_composition_tool import get_asset_class_summary
 from tools.filter_transactions_tool import filter_transactions_by_isin

@@ -16,7 +16,7 @@ class OpenAIService:
             messages=messages,
             tools=tools or [],
             tool_choice="auto",
-            temperature=0.7,
+            temperature=0,
         )
         print(response.usage)
         llm_reply, tool_calls = self.parse_response(response)
