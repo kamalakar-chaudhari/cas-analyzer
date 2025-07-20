@@ -1,13 +1,12 @@
 import json
-import sqlite3
 
-from langchain_openai import ChatOpenAI
-from langgraph.graph import StateGraph
-from langgraph.checkpoint.sqlite import SqliteSaver
 from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_openai import ChatOpenAI
+from langgraph.checkpoint.sqlite import SqliteSaver
+from langgraph.graph import StateGraph
 
-from types_ import CASAgentState
 from domain.cas_parser import CasParser
+from types_ import CASAgentState
 from utils.db_utils import get_sqlite_connection
 
 PORTFOLIO_SUMMARY_PROMPT = """
@@ -39,7 +38,6 @@ llm_with_tools = ChatOpenAI(temperature=0, model="gpt-4")
 
 
 def portfolio_summary_node(state: CASAgentState):
-    from config.app_context import llm
 
     holdings = {
         "curr_holdings": state["curr_holdings"],

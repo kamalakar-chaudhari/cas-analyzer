@@ -1,7 +1,7 @@
-import time
 from uuid import uuid4
-import streamlit as st
+
 import requests
+import streamlit as st
 
 
 # --- AgentService: Handles backend API calls ---

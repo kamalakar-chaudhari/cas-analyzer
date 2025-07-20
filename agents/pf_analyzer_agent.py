@@ -1,13 +1,12 @@
 import json
-from typing import List, Optional
 
-
-# from config.app_context import session_service
-from utils.generic_utils import object_to_json_str
 from services.openai_service import OpenAIService
 from tools.cap_composition_tool import get_asset_class_summary
 from tools.filter_transactions_tool import filter_transactions_by_isin
 from tools.xirr_tool import get_xirr
+
+# from config.app_context import session_service
+from utils.generic_utils import object_to_json_str
 
 PORTFOLIO_SUMMARY_PROMPT = """
     You are a portfolio summarizer.
@@ -59,16 +58,14 @@ PORTFOLIO_QUERY_PROMPT = """
 
 
 class PFAnalyzerAgent:
-    def __init__(
-        self, session_id: str, llm: OpenAIService, tools: Optional[List] = None
-    ):
+    def __init__(self, session_id: str, llm: OpenAIService, tools: list | None = None):
         self.llm = llm
         self.tools = tools
         self.session_id = session_id
         self.fetch_session_data()
 
     def fetch_session_data(self):
-        session_data = session_service.get_session_data(self.session_id)
+        session_data = {}  # session_service.get_session_data(self.session_id)
         self.curr_holdings = session_data["curr_holdings"]
         self.past_holdings = session_data["past_holdings"]
         self.transactions = session_data["transactions"]
@@ -117,9 +114,7 @@ class PFAnalyzerAgent:
                 messages.append(
                     {
                         "role": "assistant",
-                        "tool_calls": [
-                            tool_call.model_dump() for tool_call in tool_calls
-                        ],  # type: ignore
+                        "tool_calls": [tool_call.model_dump() for tool_call in tool_calls],  # type: ignore
                     }
                 )
                 for tool_call in tool_calls:
@@ -145,9 +140,7 @@ class PFAnalyzerAgent:
         elif tool_name == "filter_transactions_by_isin":
             if (transactions := arguments["transactions"]) == "var_transactions":
                 transactions = self.transactions
-            return object_to_json_str(
-                filter_transactions_by_isin(transactions, arguments["isin"])
-            )
+            return object_to_json_str(filter_transactions_by_isin(transactions, arguments["isin"]))
         elif tool_name == "get_asset_class_summary":
             if (curr_holdings := arguments["curr_holdings"]) == "var_curr_holdings":
                 curr_holdings = self.curr_holdings

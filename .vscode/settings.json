@@ -1,0 +1,29 @@
+{
+  "python.languageServer": "Pylance",
+  "editor.parameterHints.enabled": true,
+  "editor.hover.enabled": true,
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": false,
+    "strings": true
+  },
+  "python.linting.enabled": true,
+  "python.linting.ruffEnabled": true,
+  "python.linting.ruffPath": "ruff",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.ruff": "explicit"
+  },
+  "editor.formatOnSave": true,
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  },
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/*.pyc": true,
+    "**/venv": true,
+    "**/.venv": true,
+    "**/.git": true,
+    "**/.gitignore": true,
+    "**/.vscode": true,
+  }
+}

@@ -1,14 +1,12 @@
 # api/chat.py
-from io import BytesIO
 import os
+from io import BytesIO
+
 from fastapi import APIRouter, File, Form, Request, UploadFile
-from pydantic import BaseModel
 
 from agents.pf_analyzer_agent import PFAnalyzerAgent
-from agents.pf_analyzer_graph import PFAnalyzerGraphAgent, agent
-
+from agents.pf_analyzer_graph import PFAnalyzerGraphAgent
 from config.app_context import cas_etl_workflow, llm
-from domain.cas_parser import CasParser
 from tools.schema import tools
 
 router = APIRouter(prefix="/api", tags=["Chat"])
@@ -32,9 +30,7 @@ async def chat_endpoint(request: Request):
 
 
 @router.post("/upload")
-async def upload_file(
-    request: Request, file: UploadFile = File(...), password: str = Form(...)
-):
+async def upload_file(request: Request, file: UploadFile = File(...), password: str = Form(...)):
     file_bytes = await file.read()
     file_stream = BytesIO(file_bytes)
 

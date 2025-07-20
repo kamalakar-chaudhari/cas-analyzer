@@ -1,7 +1,4 @@
-import json
-from typing import Dict, List
 import pandas as pd
-
 
 scheme_data = pd.read_csv("reference_data/scheme_data.csv")
 scheme_cat_asset_cls_df = pd.read_csv("reference_data/scheme_cat_asset_cls.csv")

@@ -1,8 +1,7 @@
 import json
 import os
-from typing import Dict, List, Optional
+
 from openai import OpenAI
-from openai.types.chat import ChatCompletionMessageParam
 
 
 class OpenAIService:

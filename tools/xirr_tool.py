@@ -1,10 +1,9 @@
 from datetime import datetime
-from typing import List, Dict
-import numpy as np
+
 from scipy.optimize import newton
 
 
-def get_xirr(transactions: List[Dict]) -> float:
+def get_xirr(transactions: list[dict]) -> float:
     """
     Calculate the XIRR for a list of mutual fund transactions.
 

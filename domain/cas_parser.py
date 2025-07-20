@@ -1,5 +1,6 @@
-from io import StringIO
 from datetime import datetime
+from io import StringIO
+
 import casparser
 import pandas as pd
 

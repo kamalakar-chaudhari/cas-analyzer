@@ -1,5 +1,6 @@
 # utils/db_utils.py
 import sqlite3
+
 from config.constants import SQLITE_DB_PATH
 
 

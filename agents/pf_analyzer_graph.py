@@ -1,18 +1,16 @@
 import sqlite3
-from typing import Annotated, List, Optional, TypedDict
-from langchain_openai import ChatOpenAI
-from langgraph.graph import StateGraph, START, END
-from langgraph.prebuilt.tool_node import ToolNode
-from langgraph.graph.message import add_messages
+from typing import Annotated, TypedDict
+
+from langchain_core.messages import AnyMessage, HumanMessage
 from langchain_core.tools import tool
-from langchain_core.messages import HumanMessage, AIMessage, SystemMessage, AnyMessage
-from langgraph.prebuilt import ToolNode, tools_condition
+from langchain_openai import ChatOpenAI
 
 # from langgraph.graph import MessagesState
 from langgraph.checkpoint.sqlite import SqliteSaver
-
-
-from langgraph.prebuilt import ToolNode
+from langgraph.graph import StateGraph
+from langgraph.graph.message import add_messages
+from langgraph.prebuilt import tools_condition
+from langgraph.prebuilt.tool_node import ToolNode
 
 from services.openai_service import OpenAIService
 
@@ -63,9 +61,7 @@ agent = graph_builder.compile(checkpointer=memory)
 
 
 class PFAnalyzerGraphAgent:
-    def __init__(
-        self, session_id: str, llm: OpenAIService, tools: Optional[List] = None
-    ):
+    def __init__(self, session_id: str, llm: OpenAIService, tools: list | None = None):
         self.llm = llm
         self.tools = tools
         self.session_id = session_id

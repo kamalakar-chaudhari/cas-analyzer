@@ -1,5 +1,5 @@
-import re
 import json
+import re
 
 
 def extract_raw_json(response: str):
