@@ -1,8 +1,10 @@
 from datetime import datetime
 
+from langchain_core.tools import tool
 from scipy.optimize import newton
 
 
+@tool
 def get_xirr(transactions: list[dict]) -> float:
     """
     Calculate the XIRR for a list of mutual fund transactions.
@@ -12,7 +14,7 @@ def get_xirr(transactions: list[dict]) -> float:
     - "date": str in "YYYY-MM-DD" format
 
     Args:
-        transactions (List[Dict]): List of dicts with "amount" and "date" keys
+        transactions (list[dict]): List of dicts with "amount" and "date" keys
 
     Returns:
         float: XIRR as a decimal (e.g., 0.124 means 12.4%)
@@ -34,8 +36,7 @@ def get_xirr(transactions: list[dict]) -> float:
     # XIRR objective function
     def xnpv(rate: float):
         return sum(
-            cf / (1 + rate) ** ((dt - start_date).days / 365)
-            for cf, dt in zip(cash_flows, dates)
+            cf / (1 + rate) ** ((dt - start_date).days / 365) for cf, dt in zip(cash_flows, dates)
         )
 
     # Use Newton-Raphson method to solve for IRR

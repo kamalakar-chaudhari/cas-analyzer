@@ -1,4 +1,8 @@
-def filter_transactions_by_isin(transactions, isin):
+from langchain_core.tools import tool
+
+
+@tool
+def filter_transactions_by_isin(transactions: list, isin: str) -> list:
     """
     Filters the given list of transactions to only include those with the specified ISIN.
 

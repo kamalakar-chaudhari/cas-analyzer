@@ -1,11 +1,10 @@
-from typing import Annotated, TypedDict
+from typing import TypedDict
 
 from langchain_core.messages import AnyMessage
-from langgraph.graph.message import add_messages
 
 
 class CASAgentState(TypedDict):
-    messages: Annotated[list[AnyMessage], add_messages]
+    messages: list[AnyMessage]
     transactions: list[dict]
     curr_holdings: list[dict]
     past_holdings: list[dict]

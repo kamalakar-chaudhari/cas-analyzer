@@ -34,11 +34,10 @@ PORTFOLIO_SUMMARY_PROMPT = """
 """
 
 
-llm_with_tools = ChatOpenAI(temperature=0, model="gpt-4")
+llm_with_tools = ChatOpenAI(temperature=0, model="gpt-4o")
 
 
 def portfolio_summary_node(state: CASAgentState):
-
     holdings = {
         "curr_holdings": state["curr_holdings"],
         "past_holdings": state["past_holdings"],
@@ -81,4 +80,5 @@ class CasETLWorkflow:
         config = {"configurable": {"thread_id": session_id}}
         self.agent.update_state(config, pf_details)
         result = self.agent.invoke({}, config=config)
+        self.agent.update_state(config, {"messages": []})
         return result["messages"][-1].content

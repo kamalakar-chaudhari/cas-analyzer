@@ -1,10 +1,12 @@
 import pandas as pd
+from langchain_core.tools import tool
 
 scheme_data = pd.read_csv("reference_data/scheme_data.csv")
 scheme_cat_asset_cls_df = pd.read_csv("reference_data/scheme_cat_asset_cls.csv")
 
 
-def get_asset_class_composition(curr_holdings):
+@tool
+def get_asset_class_composition(curr_holdings: list):
     """
     extend curr_holdings by adding scheme category and then asset class
 
@@ -24,9 +26,9 @@ def get_asset_class_composition(curr_holdings):
         isin = row["isin"]
         # Find matching scheme in scheme_data
         match = scheme_data[
-            scheme_data[
-                "ISIN Div Payout/ ISIN GrowthISIN Div Reinvestment"
-            ].str.contains(isin, na=False)
+            scheme_data["ISIN Div Payout/ ISIN GrowthISIN Div Reinvestment"].str.contains(
+                isin, na=False
+            )
         ]
 
         if not match.empty:
@@ -51,7 +53,7 @@ def get_asset_class_composition(curr_holdings):
     return result_df
 
 
-def get_asset_class_summary(curr_holdings):
+def get_asset_class_summary(curr_holdings: list) -> dict:
     """
     Aggregate holdings by asset class and return summary with market value and percentage
 
@@ -69,9 +71,7 @@ def get_asset_class_summary(curr_holdings):
 
     # Group by asset class and aggregate
     asset_class_summary = (
-        holdings_with_asset_class.groupby("asset_class")
-        .agg({"market_value": "sum"})
-        .reset_index()
+        holdings_with_asset_class.groupby("asset_class").agg({"market_value": "sum"}).reset_index()
     )
 
     # Calculate percentage of portfolio

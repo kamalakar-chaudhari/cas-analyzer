@@ -1,63 +1,54 @@
 import json
 
+from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
+from langchain_openai import ChatOpenAI
+from langgraph.checkpoint.sqlite import SqliteSaver
+from langgraph.graph import StateGraph
+from langgraph.prebuilt import tools_condition
+
 from services.openai_service import OpenAIService
 from tools.cap_composition_tool import get_asset_class_summary
 from tools.filter_transactions_tool import filter_transactions_by_isin
+from tools.schema import tools
 from tools.xirr_tool import get_xirr
-
-# from config.app_context import session_service
+from types_ import CASAgentState
+from utils.db_utils import get_sqlite_connection
 from utils.generic_utils import object_to_json_str
 
-PORTFOLIO_SUMMARY_PROMPT = """
-    You are a portfolio summarizer.
-
-    ## Inputs
-
-    You will be given two tables:
-
-    ### 1. Current Holdings
-    - Each row contains: scheme name, ISIN, units held, invested amount, and current market value.
-    - Your task: For each scheme, calculate:
-    - Absolute gain = market value − amount
-    - Percentage gain = (gain / amount) × 100
-    - Output: A markdown table with scheme name, amount, market value, absolute gain, and percentage gain.
-
-    ### 2. Past Holdings
-    - This table contains schemes the user had invested in previously but currently holds zero units.
-    - Your task: List only the scheme names in a simple markdown table.
-
-    ## Guidelines
-
-    - Return both tables in markdown format.
-    - At the top, include a brief description of what "current holdings" and "past holdings" represent.
-"""
-
 PORTFOLIO_QUERY_PROMPT = """
-    You are an intelligent assistant that answers user questions about their investment portfolio by reasoning through steps and calling functions when needed.
+You are an intelligent assistant that answers user questions about their investment portfolio
+by reasoning through steps and calling tools (functions) when needed.
 
-    You have access to a set of tools (functions). Use them when appropriate to obtain the information required to answer the user's query.
+You have access to a set of tools. Use them when required to obtain information needed
+to answer the user's query.
 
-    Your job is to:
-    - Understand the user's query
-    - Call the most appropriate function with the correct arguments
-    - Wait for the result of that function call (you will receive it from the system)
-    - Continue reasoning or call more functions if needed
-    - Return a final answer to the user once sufficient information is available
+Your responsibilities:
+- Understand the user's query
+- Call the most appropriate function with correct arguments (when needed)
+- Wait for the system to return the result
+- Continue reasoning or call more tools if needed
+- Once you have all necessary information, return a final, clear answer to the user
 
-    ---
+Data Variables Available:
+- 'var_transactions': all my transactions
+- 'var_curr_holdings': current holdings
+- 'var_past_holdings': holdings sold in the past
 
-    Guidelines:
-    - Use tool calls only when required — not every query needs a tool.
-    - The system will handle calling the tool — just provide the function name and arguments.
-    - Once you have all the information you need, respond to the user with a clear and final answer.
-    - If the result would benefit from visual representation (e.g., comparing performance across funds), return a code snippet that can be used in Streamlit to render the relevant graph using matplotlib or plotly.
-    - Do not include any internal reasoning, thoughts, or tool call descriptions in your response.
+You can reference these variables in tool calls. Do not generate or assume any actual data.
 
-    Only respond with a natural user-facing answer when you are done.
+---
+
+Guidelines:
+- Use tool calls only when necessary. Not all queries require them.
+- To call a tool, respond with the function name and a JSON object of arguments. Do not explain the call.
+- Once done, respond with a final natural answer — concise and accurate.
+- If a chart would help, return a valid Python code snippet using matplotlib or plotly that can be used in Streamlit.
+- Never include reasoning, internal thoughts, or tool descriptions in the final response.
+- If the required information is missing or unknown, say so honestly — do not fabricate data.
 """
 
 
-class PFAnalyzerAgent:
+class PFAnalyzerAgent_:
     def __init__(self, session_id: str, llm: OpenAIService, tools: list | None = None):
         self.llm = llm
         self.tools = tools
@@ -79,7 +70,7 @@ class PFAnalyzerAgent:
 
     def get_portfolio_summary(self):
         messages = [
-            {"role": "system", "content": PORTFOLIO_SUMMARY_PROMPT},
+            {"role": "system", "content": PORTFOLIO_QUERY_PROMPT},
             {
                 "role": "user",
                 "content": f"Here are my holdings:\n{self.holdings_as_json_str}",
@@ -95,9 +86,9 @@ class PFAnalyzerAgent:
                 "role": "user",
                 "content": (
                     "I have initialized the following data variables for you:\n"
-                    "- `var_transactions`: all my transactions\n"
-                    "- `var_curr_holdings`: current holdings\n"
-                    "- `var_past_holdings`: holdings sold in the past\n\n"
+                    "- var_transactions: all my transactions\n"
+                    "- var_curr_holdings: current holdings\n"
+                    "- var_past_holdings: holdings sold in the past\n\n"
                     "You can refer to these variables in function calls — do not generate or assume any actual data.\n\n"
                     f"My full holdings snapshot (for your context only, not for tool input):\n{self.holdings_as_json_str}\n\n"
                     f"Here is my question:\n{query}"
@@ -145,3 +136,81 @@ class PFAnalyzerAgent:
             if (curr_holdings := arguments["curr_holdings"]) == "var_curr_holdings":
                 curr_holdings = self.curr_holdings
             return object_to_json_str(get_asset_class_summary(curr_holdings))
+
+
+# --------------------
+
+llm_with_tools = ChatOpenAI(
+    temperature=0,
+    model="gpt-4o",
+).bind_tools(tools, tool_choice="auto", strict=False)
+
+
+def llm_node(state: CASAgentState):
+    resp = llm_with_tools.invoke(state["messages"])
+    return {"messages": state["messages"] + [resp]}
+
+
+tools_by_name = {tool.name: tool for tool in tools}
+
+
+def tool_node(state: dict):
+    def _parse_tool_call(tool_call):
+        tool = tools_by_name[tool_call["name"]]
+        args = tool_call["args"]
+        if args["transactions"] == "var_transactions":
+            args["transactions"] = state.get("transactions")
+        return tool, args
+
+    result = []
+    for tool_call in state["messages"][-1].tool_calls:
+        tool, args = _parse_tool_call(tool_call)
+        observation = tool.invoke(args)
+
+        result.append(
+            ToolMessage(content=object_to_json_str(observation), tool_call_id=tool_call["id"])
+        )
+    return {"messages": state["messages"] + result}
+
+
+class PFAnalyzerAgent:
+    def __init__(self):
+        graph_builder = StateGraph(CASAgentState)
+        graph_builder.add_node("llm_node", llm_node)
+        graph_builder.add_node("tools", tool_node)
+
+        graph_builder.set_entry_point("llm_node")
+        graph_builder.add_conditional_edges("llm_node", tools_condition)
+        graph_builder.add_edge("tools", "llm_node")
+        graph_builder.set_finish_point("llm_node")
+
+        with get_sqlite_connection() as conn:
+            memory = SqliteSaver(conn)
+            self.agent = graph_builder.compile(checkpointer=memory)
+
+    def _get_system_prompt(self, state: CASAgentState):
+        holdings = {
+            "curr_holdings": state["curr_holdings"],
+            "past_holdings": state["past_holdings"],
+        }
+
+        holdings_as_json_str = f"```json\n{json.dumps(holdings, indent=2)}\n```"
+
+        return [
+            SystemMessage(PORTFOLIO_QUERY_PROMPT),
+            HumanMessage(f"Here are my holdings:\n{holdings_as_json_str}"),
+        ]
+
+    def _filter_tool_messages(self, messages):
+        return [msg for msg in messages if msg.type not in {"tool", "tool_use", "tool_result"}]
+
+    def invoke(self, session_id, query):
+        config = {"configurable": {"thread_id": session_id}}
+        state = self.agent.get_state(config).values
+        if not (messages := state["messages"]):
+            messages = self._get_system_prompt(state)
+        else:
+            messages = self._filter_tool_messages(messages)
+        messages.append(HumanMessage(query))
+        result = self.agent.invoke({"messages": messages}, config=config)
+        return result["messages"][-1].content
