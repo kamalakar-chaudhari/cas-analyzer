@@ -1,5 +1,5 @@
 {
-  "python.languageServer": "Pylance",
+  "python.languageServer": "None",
   "editor.parameterHints.enabled": true,
   "editor.hover.enabled": true,
   "editor.quickSuggestions": {

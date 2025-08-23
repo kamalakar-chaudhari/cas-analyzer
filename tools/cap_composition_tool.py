@@ -5,7 +5,6 @@ scheme_data = pd.read_csv("reference_data/scheme_data.csv")
 scheme_cat_asset_cls_df = pd.read_csv("reference_data/scheme_cat_asset_cls.csv")
 
 
-@tool
 def get_asset_class_composition(curr_holdings: list):
     """
     extend curr_holdings by adding scheme category and then asset class
@@ -53,6 +52,7 @@ def get_asset_class_composition(curr_holdings: list):
     return result_df
 
 
+@tool
 def get_asset_class_summary(curr_holdings: list) -> dict:
     """
     Aggregate holdings by asset class and return summary with market value and percentage

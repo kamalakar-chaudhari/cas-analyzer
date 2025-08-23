@@ -1,8 +1,8 @@
-from tools.cap_composition_tool import get_asset_class_composition
+from tools.cap_composition_tool import get_asset_class_summary
 from tools.filter_transactions_tool import filter_transactions_by_isin
 from tools.xirr_tool import get_xirr
 
-tools = [get_xirr, filter_transactions_by_isin, get_asset_class_composition]
+tools = [get_xirr, filter_transactions_by_isin, get_asset_class_summary]
 
 tools_ = [
     {

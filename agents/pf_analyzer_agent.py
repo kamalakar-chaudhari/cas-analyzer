@@ -1,16 +1,15 @@
 import json
+import os
+import sys
 
-from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import StateGraph
 from langgraph.prebuilt import tools_condition
 
-from services.openai_service import OpenAIService
-from tools.cap_composition_tool import get_asset_class_summary
-from tools.filter_transactions_tool import filter_transactions_by_isin
 from tools.schema import tools
-from tools.xirr_tool import get_xirr
 from types_ import CASAgentState
 from utils.db_utils import get_sqlite_connection
 from utils.generic_utils import object_to_json_str
@@ -47,102 +46,9 @@ Guidelines:
 - If the required information is missing or unknown, say so honestly — do not fabricate data.
 """
 
-
-class PFAnalyzerAgent_:
-    def __init__(self, session_id: str, llm: OpenAIService, tools: list | None = None):
-        self.llm = llm
-        self.tools = tools
-        self.session_id = session_id
-        self.fetch_session_data()
-
-    def fetch_session_data(self):
-        session_data = {}  # session_service.get_session_data(self.session_id)
-        self.curr_holdings = session_data["curr_holdings"]
-        self.past_holdings = session_data["past_holdings"]
-        self.transactions = session_data["transactions"]
-
-        holdings = {
-            "curr_holdings": self.curr_holdings,
-            "past_holdings": self.past_holdings,
-        }
-
-        self.holdings_as_json_str = f"```json\n{json.dumps(holdings, indent=2)}\n```"
-
-    def get_portfolio_summary(self):
-        messages = [
-            {"role": "system", "content": PORTFOLIO_QUERY_PROMPT},
-            {
-                "role": "user",
-                "content": f"Here are my holdings:\n{self.holdings_as_json_str}",
-            },
-        ]
-        llm_reply, _ = self.llm.invoke(messages)
-        return llm_reply
-
-    async def ask(self, query):
-        messages = [
-            {"role": "system", "content": PORTFOLIO_QUERY_PROMPT},
-            {
-                "role": "user",
-                "content": (
-                    "I have initialized the following data variables for you:\n"
-                    "- var_transactions: all my transactions\n"
-                    "- var_curr_holdings: current holdings\n"
-                    "- var_past_holdings: holdings sold in the past\n\n"
-                    "You can refer to these variables in function calls — do not generate or assume any actual data.\n\n"
-                    f"My full holdings snapshot (for your context only, not for tool input):\n{self.holdings_as_json_str}\n\n"
-                    f"Here is my question:\n{query}"
-                ),
-            },
-            # {"role": "user", "content": query},
-        ]
-        final_answer = "Sorry! Unable answer to your query."
-        while True:
-            final_answer, tool_calls = self.llm.invoke(messages, self.tools)
-            if final_answer:
-                return final_answer
-            elif tool_calls:
-                messages.append(
-                    {
-                        "role": "assistant",
-                        "tool_calls": [tool_call.model_dump() for tool_call in tool_calls],  # type: ignore
-                    }
-                )
-                for tool_call in tool_calls:
-                    observation = self.process_tool_call(tool_call)
-                    messages.append(
-                        {
-                            "role": "tool",
-                            "tool_call_id": tool_call.id,
-                            "content": observation,
-                        }
-                    )
-            else:
-                break
-        return final_answer
-
-    def process_tool_call(self, tool_call) -> str:
-        tool_name, arguments = self.llm.parse_tool_call(tool_call)
-
-        if tool_name == "get_xirr":
-            if (transactions := arguments["transactions"]) == "var_transactions":
-                transactions = self.transactions
-            return str(get_xirr(transactions))
-        elif tool_name == "filter_transactions_by_isin":
-            if (transactions := arguments["transactions"]) == "var_transactions":
-                transactions = self.transactions
-            return object_to_json_str(filter_transactions_by_isin(transactions, arguments["isin"]))
-        elif tool_name == "get_asset_class_summary":
-            if (curr_holdings := arguments["curr_holdings"]) == "var_curr_holdings":
-                curr_holdings = self.curr_holdings
-            return object_to_json_str(get_asset_class_summary(curr_holdings))
-
-
-# --------------------
-
 llm_with_tools = ChatOpenAI(
     temperature=0,
-    model="gpt-4o",
+    model="gpt-4.1-mini",
 ).bind_tools(tools, tool_choice="auto", strict=False)
 
 
@@ -158,8 +64,10 @@ def tool_node(state: dict):
     def _parse_tool_call(tool_call):
         tool = tools_by_name[tool_call["name"]]
         args = tool_call["args"]
-        if args["transactions"] == "var_transactions":
+        if args.get("transactions") == "var_transactions":
             args["transactions"] = state.get("transactions")
+        if args.get("curr_holdings") == "var_curr_holdings":
+            args["curr_holdings"] = state.get("curr_holdings")
         return tool, args
 
     result = []
@@ -202,7 +110,15 @@ class PFAnalyzerAgent:
         ]
 
     def _filter_tool_messages(self, messages):
-        return [msg for msg in messages if msg.type not in {"tool", "tool_use", "tool_result"}]
+        return [
+            msg
+            for msg in messages
+            if (
+                isinstance(msg, (HumanMessage | AIMessage | SystemMessage))
+                and not getattr(msg, "tool_calls", None)  # removes assistant tool calls
+            )
+        ]
+        # return [msg for msg in messages if msg.type not in {"tool", "tool_use", "tool_result"}]
 
     def invoke(self, session_id, query):
         config = {"configurable": {"thread_id": session_id}}
@@ -213,4 +129,15 @@ class PFAnalyzerAgent:
             messages = self._filter_tool_messages(messages)
         messages.append(HumanMessage(query))
         result = self.agent.invoke({"messages": messages}, config=config)
+        print(result["messages"][-1])
         return result["messages"][-1].content
+
+
+if __name__ == "__main__":
+    graph = PFAnalyzerAgent()
+    graph.invoke(
+        "c3d8b4e6-0122-4330-9d08-ea31e7035bb0",
+        "what is the historical xirr of my current and past schemes?",
+    )
+    # config = {"configurable": {"thread_id": "c3d8b4e6-0122-4330-9d08-ea31e7035bb0"}}
+    # graph.agent.get_state(config)

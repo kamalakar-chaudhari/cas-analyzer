@@ -23,6 +23,8 @@ dependencies = [
     "langgraph-checkpoint-sqlite (>=2.0.10,<3.0.0)",
     "python-multipart (>=0.0.20,<0.0.21)",
     "ipykernel (>=6.30.0,<7.0.0)",
+    "langchain (>=0.3.26,<0.4.0)",
+    "langchain-community (>=0.3.27,<0.4.0)",
 ]
 
 
