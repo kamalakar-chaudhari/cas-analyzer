@@ -83,6 +83,8 @@ poetry run streamlit run ui/chatbot.py
    - Enter the password if required
    - Click "Upload File"
 
+![CAS Upload Interface](assets/upload_cas.png)
+
 2. **Ask Questions**:
    - Once uploaded, you can ask questions like:
      - "What's my portfolio summary?"
